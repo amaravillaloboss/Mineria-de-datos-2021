@@ -1375,7 +1375,8 @@ df_3[,c(14:50)] %>%
 ```
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
-\#\# Histograma Ingredientes hamburguesas clasificadas como “buenas”
+
+## Histograma Ingredientes hamburguesas clasificadas como “buenas”
 
 ``` r
 # Ahora filtraremos si la nota es mayor a 3 y los comnetarios digan bueno y rico.
@@ -1756,7 +1757,8 @@ df_4[,c(14:50)] %>%
 ```
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-\#\# Análisis PCA
+
+## Análisis PCA
 
 ``` r
 #Estandarizar, promedio, varianza, rotación

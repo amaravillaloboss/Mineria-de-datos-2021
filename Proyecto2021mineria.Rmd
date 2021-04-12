@@ -266,6 +266,8 @@ df_3[,c(14:50)] %>%
   labs(x = "Ingrediente") +
   theme(axis.text.x = element_text(angle = 90))
 ```
+
+
 ## Histograma Ingredientes hamburguesas clasificadas como "buenas"
 ```{r}
 # Ahora filtraremos si la nota es mayor a 3 y los comnetarios digan bueno y rico.
@@ -282,6 +284,8 @@ df_4[,c(14:50)] %>%
   labs(x = "Ingrediente") +
   theme(axis.text.x = element_text(angle = 90))
 ```
+
+
 ## Análisis PCA
 ```{r}
 #Estandarizar, promedio, varianza, rotación
@@ -436,6 +440,7 @@ dim(df_5)
 #Conclusion
 #En base a lo explicado anteriormente, vamos a filtrar la base de datos segun hamburguesas que tengan #distancia mahalanobis<7 y distancia maxima knn<1. Obteniendo finalmente una base de datos más limpia con #326 variables.
 ```
+
 
 ## Histograma Ingredientes hamburguesas clasificadas como "buenas"
 ```{r}
