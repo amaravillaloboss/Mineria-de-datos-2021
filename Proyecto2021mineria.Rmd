@@ -46,7 +46,6 @@ sanguchez$Precio = str_replace_all(sanguchez$Precio, " $", "")
 attach(sanguchez)
 #Sacaremos aquellos precios que muestran mas de un precio por el hecho que vengan con
 #otra moneda inicial
-#cbind(Precio,str_count(Precio, "\\$"),str_count(Precio, " "))
 # para lo anterior nos quedaremos solo con los precios que no tengan espacios
 #y que solo tengan y solo signo peso, las eliminamos :
 
@@ -146,16 +145,20 @@ colnames(sanguchez)
 
 plot(nota,cantidad_ingredientes)
 boxplot(cantidad_ingredientes)
-plot(nota,cantidad_ingredientes)
-#ggplot ( Precio , aes ( x = x , color = data)) + 
-#    geom_boxplot () + 
-#    theme_void () + 
-#    theme ( legend.position  =  " none " ) + 
-#    facet_wrap ( ~ data, ncol = 3 )
 boxplot(sanguchez$cantidad_ingredientes ~ sanguchez$nota)
 boxplot(sanguchez$suma1 ~ sanguchez$nota)
+boxplot(sanguchez$suma2 ~ sanguchez$nota)
 boxplot(sanguchez$Precio ~ sanguchez$nota)
 boxplot(sanguchez$Precio ~ sanguchez$cantidad_ingredientes)
+
+# Conclusiones
+# Gráfico 1: La variable nota no es muy "dependiente" de la variable cantidad de ingredientes, ya que, se #puede observar que el rango de cantidad de ingredientes es similar en todas las notas.
+# Gráfico 2: Aproximadamente el 50% de los datos se acumula entre 4 y 6, es decir, que la mitad de las #hamburguesas tiene entre 4 y 6 ingredientes.
+# Gráfico 3: La media de todas las notas es cercana al 5, lo que varia es el rango en la cantidad de #ingredientes en las notas 4 y 5, donde el rango intercuartilico  entre el 25 y 75% se mueve entre números #mas grandes, los números 5 a 6 y 5 a 7 respectivamente. Adémas se observan posibles outliers o datós #atipicos en las notas 2, 3 y 4, que se escapan del rango intercuartil, teniendo o muchos ingredientes o muy #pocos.
+#Gráfico 4: Para la nota 1, podemos notar que la variación es del 0 al 1, es decir, que en el comentario #podría estar la palabra bueno o rico, pero no ambas al mismo tiempo, lo que tiene mucho sentido. Aunque, #para el caso de la nota 5, ocurre el mismo fenomeno, lo que nos parece extraño ya que si tiene mejor nota #deberia tener mas de estos calificativos. Por lo que concluimos que quizas la elección de palabras no fue #la óptima.
+#Gráfico 5: Podemos observar que en las notas 4 y 5 la mayoria de los datos no presentan ningun comentario "malo" o "peor". Lo que quiere decir que la variable suma2 explica mucho mejor que la variable suma1.
+#Gráfico 6: A grandes rasgos, la media de cantidad de ingredientes no varia mucho segun la nota. 
+#Gráfico 7: Se puede observar algun tipo e correlacion, pero no necesariamente positivo, es decir, no porque #tenga mas ingredientes la hamburguesa significa que esta tenga un precio mas elevado. Además se observan #algunos datos atipicos como por ejemplo cuando la hamburguesa tiene 7 ingredientes.
 ```
 
 ## Correlación entre variables númericas
@@ -164,25 +167,10 @@ boxplot(sanguchez$Precio ~ sanguchez$cantidad_ingredientes)
 cor(x = cbind(Precio,nota,cantidad_ingredientes,suma1, suma2), method = "pearson")
 cor.plot(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
 pairs(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
+
+#Conclusiones
+# Podemos observar distintos tipos de correlacion entre las variables. Por ejemplo, la variable Precio tiene una correlacion positiva con cantidad de ingredientes, pero esta al ser 0.22 es muy cercana a 0 lo que se considera baja. Para el caso de suma2 con nota es -0.41, observaos una correlacion negativa pero mas alta, cercana al 0.5, lo que nuevamente demuestra que la variable suma2 explica mucho mejor que la variable suma1, la nota de la hamburguesa.
 ```
-
-## Similitud coseno
-```{r}
-# similitud coseno:
-# Coseno
-coseno <- function(x, y){
-  resultado <- x%*%y / (sqrt(x %*% x) * sqrt(y %*%y ))
-  return(as.numeric(resultado))
-}
-
-coseno(Precio,nota)
-# Coseno tras centrar los vectores
-a <- Precio - mean(Precio)
-b <- nota - mean(nota)
-coseno(a,b)
-```
-
-
 
 ## Matriz Ingredientes
 ```{r}
@@ -240,6 +228,8 @@ DF[,c(14:356)] = DF[,c(names(DF_ingre))]
 names(DF[14]) = c(names(DF_ingre))[1]
 col_iniciales = names(DF[1:13])
 col_total = c(col_iniciales,c(names(DF_ingre)))
+
+#En la salida de código se muestra los 10 ingredientes que más se utilizan en el repertorio de hamburguesas.
 ```
 
 ## Histograma Ingredientes
@@ -256,6 +246,8 @@ DF[,c(14:50)] %>%
   theme_bw() +
   labs(x = "Ingrediente") +
   theme(axis.text.x = element_text(angle = 90))
+
+#A partir del histograma podemos observar los ingredientes mas utilizados y como se distibuyen.
 ```
 
 ## Histograma Ingredientes hamburguesas clasificadas como "malas"
@@ -339,7 +331,13 @@ ggplot(data = data.frame(prop_varianza_acum, pc = 1:5),
   labs(x = "Componente principal",
        y = "Prop. varianza explicada acumulada")
 
+#A partir del analisis PCA, vamos a eliminar la variable con menos varianza explicada. En el gráfico de varianza explicada acumulada, se puede ver que si se elimina el componente 5, es decir, la cantidad de ingredientes, el resto de las variables en su totalidad, van a explicar un 90%.
 ```
+```{r}
+dataframe <- select(DF, -url, -Local, -Direccion, -Ingredientes, -Bueno, -Rico, -Malo, -Peor, -suma1, -cantidad_ingredientes)
+
+```
+
 
 #Detección de Outliers
 
@@ -347,9 +345,9 @@ ggplot(data = data.frame(prop_varianza_acum, pc = 1:5),
 ```{r}
 
 # Obtenemos los datos de mahalnobis con una escala de [0,1]
-sanguchez$mah = mahalanobis(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2)) ,
-                            colMeans(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2))),
-                            cov(cbind(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2)))))
+sanguchez$mah = mahalanobis(cbind(Precio/max(Precio),nota/max(nota), suma2/max(suma2)) ,
+                            colMeans(cbind(Precio/max(Precio),nota/max(nota), suma2/max(suma2))),
+                            cov(cbind(cbind(Precio/max(Precio),nota/max(nota),suma2/max(suma2)))))
 
 
 hist(sanguchez$mah)
@@ -375,7 +373,7 @@ max(sanguchez$mah)
 min(sanguchez$mah)
 
 # Visualizo el diagrama de dispersion, coloreado segun mahalanobis
-ggplot(DF, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
+ggplot(dataframe, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
   geom_point(size=1,alpha=0.8)+theme_bw()+
   scale_color_gradient(low="blue",high="red")+
   ggtitle("Distancia Mahalanobis por hamburguesa") + 
@@ -385,6 +383,9 @@ ggplot(DF, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
         axis.text = element_text(size = 10, color="black")) +
   xlab("Hamburguesas") + 
   ylab("Distancia Mahalanobis") 
+
+#Conclusiones
+# A partir de los gráficos se puede observar sobre la distancia igual a 7 comenzamos a notar un cambio de #color, lo que puede indicar, la detección de los outliers. Esto se puede observar a su vez, en el grafico de densidad hecho con anterioridad a este, en donde los datos se concentran entre 0 y 7.
 ```
 
 
@@ -395,7 +396,7 @@ library(distances)
 library(dbscan)
 
 #Calculo distancias de mahalanobis, utilizando otro metodo disponible en la libreria distances
-tempDist <- distances(DF[,c(4,6,11,12)],normalize = "mahalanobize") %>% as.dist()
+tempDist <- distances(dataframe[,c(1,2,3)],normalize = "mahalanobize") %>% as.dist()
 
 #preservo las 4 distancias menores
 temp <- kNNdist(tempDist, 4, all=T)
@@ -407,9 +408,10 @@ ggplot(temp %>% as_tibble(), aes(x=temp)) +
   theme_bw() +
   theme(text=element_text(size=25))
 ```
+
 ```{r}
 # Visualizo el diagrama de dispersion, coloreado segun distancia máxima de KNN
-ggplot(DF, aes(x=c(1:358),y=temp,color=temp)) +
+ggplot(dataframe, aes(x=c(1:358),y=temp,color=temp)) +
   geom_point(size=1,alpha=0.8)+theme_bw()+
   scale_color_gradient(low="blue",high="red")+
   ggtitle("4-NN") + 
@@ -419,45 +421,39 @@ ggplot(DF, aes(x=c(1:358),y=temp,color=temp)) +
         axis.text = element_text(size = 10, color="black")) +
   xlab("Hamburguesas") + 
   ylab("Distancia máxima KNN") 
+
+#Conclusiones
+#Al igual que en mahalanobis, el cambio de color se observa en distancia máxima=1, los puntitos rojos empizan a aparecer después de esa distancia. Tambien, en el grafico de densidad se observa la mayor cantidad de datos se acumula entre 0 y 1.
 ```
 
-## KNN k=5
-```{r}
-# invoco librerias
-library(distances)
-library(dbscan)
-
-#Calculo distancias de mahalanobis, utilizando otro metodo disponible en la libreria distances
-tempDist <- distances(DF[,c(4,6,11,12)],normalize = "mahalanobize") %>% as.dist()
-
-#preservo las 4 distancias menores
-temp <- kNNdist(tempDist, 5, all=T)
-temp <- temp[,5] # preservo la maxima de las 4 distancias cercanas
-
-# visualizo la densidad de estas distancias maximas
-ggplot(temp %>% as_tibble(), aes(x=temp)) +
-  geom_density() +
-  theme_bw() +
-  theme(text=element_text(size=25))
-```
-```{r}
-# Visualizo el diagrama de dispersion, coloreado segun distancia máxima de KNN
-ggplot(DF, aes(x=c(1:358),y=temp,color=temp)) +
-  geom_point(size=1,alpha=0.8)+theme_bw()+
-  scale_color_gradient(low="blue",high="red")+
-  ggtitle("5-NN") + 
-  theme_bw() +
-  theme(plot.title = element_text(size = 20, face="bold", hjust=0.5),
-        axis.title = element_text(size = 15),
-        axis.text = element_text(size = 10, color="black")) +
-  xlab("Hamburguesas") + 
-  ylab("Distancia máxima KNN") 
-```
 
 ## Eliminación de Outliers
 ```{r}
-df_5 = filter(DF, sanguchez$mah < 10, temp<1.5)
-dim(DF)
+df_5 = filter(dataframe, sanguchez$mah < 7, temp<1)
+dim(dataframe)
 dim(df_5)
+
+#Conclusion
+#En base a lo explicado anteriormente, vamos a filtrar la base de datos segun hamburguesas que tengan #distancia mahalanobis<7 y distancia maxima knn<1. Obteniendo finalmente una base de datos más limpia con #326 variables.
+```
+
+## Histograma Ingredientes hamburguesas clasificadas como "buenas"
+```{r}
+df_5 = filter(dataframe,nota>3, suma2 == 0)
+
+glimpse(df_4)
+df_5[,c(4:50)] %>%
+  gather(key = "variable", value = "valor") %>%
+  filter(valor != 0) %>% group_by(variable) %>%
+  count() %>% 
+  ggplot(aes(x =  reorder(variable, desc(n)), y = n)) +
+  geom_col() +
+  theme_bw() +
+  labs(x = "Ingrediente") +
+  theme(axis.text.x = element_text(angle = 90))
+
+#Conclusión final:
+#A partir de todo el analisis anterior, graficos, etc. Los ingredientes que asegurarian una buena nota son: #queso azul, mayonesa casera, cebolla caramelizada, salsa, palta, tomate, hamburguesa de carne y lechuga. Podrian #haber otras combinaciones que tambien funcionarian entre los ingredientes que se muestran en el gráfico.
+
 ```
 
