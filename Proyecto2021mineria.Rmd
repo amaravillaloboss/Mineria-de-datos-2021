@@ -29,6 +29,7 @@ sanguchez <- read.csv("sanguchez.csv", sep=';')
 
 ```
 
+## Limpieza de datos
 ```{r}
 # limpiamos la data de los NA y de los vacíos:
 sanguchez = na.omit(sanguchez)
@@ -61,6 +62,8 @@ sanguchez$Precio = str_replace_all(sanguchez$Precio, "\\.", "")
 sanguchez$Precio = as.integer(sanguchez$Precio) 
 
 ```
+
+## Detección de texto 
 ```{r}
 # Luego, obtenemos las columnas que nos puedan ayudar, por ejemplo si en el texto tenemos 
 # bueno, malo, rico o peor, seleccionamos estas palabras ya que son adjetivos representativos de lo que estamos intentando #identificar en el comentario de cada hamburguesa.
@@ -103,10 +106,12 @@ hist(sanguchez$suma2)
 
 
 ```
+
+## Análisis y conteo de variable ingredientes
 ```{r}
 attach(sanguchez)
 
-# A continuación, extraeremos la cantidad de ingredientes de cada hamburguesa.
+# A continuación, extraeremos la cantidad de ingredientes de cada hamburguesa.Esto lo haremos ya que consideramos que podria ser #una variable relevante para nuestro análisis.
 L_ingredientes = 
   strsplit(str_replace_all(sanguchez$Ingredientes,"(,.y|,y)",","),"( y |,)")
 
@@ -130,6 +135,7 @@ which.max(sanguchez$cantidad_ingredientes)
 
 ```
 
+## Análisis visual de los datos
 ```{r}
 #A partir de la limpieza de la base de datos realizada con anterioridad, damos paso a realizar diferentes representaciones gráficas de los datos.
 attach(sanguchez)
@@ -146,10 +152,13 @@ plot(nota,cantidad_ingredientes)
 #    theme_void () + 
 #    theme ( legend.position  =  " none " ) + 
 #    facet_wrap ( ~ data, ncol = 3 )
-
+boxplot(sanguchez$cantidad_ingredientes ~ sanguchez$nota)
+boxplot(sanguchez$suma1 ~ sanguchez$nota)
+boxplot(sanguchez$Precio ~ sanguchez$nota)
+boxplot(sanguchez$Precio ~ sanguchez$cantidad_ingredientes)
 ```
 
-
+## Correlación entre variables númericas
 ```{r}
 # Correlación de pearson: 
 cor(x = cbind(Precio,nota,cantidad_ingredientes,suma1, suma2), method = "pearson")
@@ -157,6 +166,25 @@ cor.plot(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
 pairs(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
 ```
 
+## Similitud coseno
+```{r}
+# similitud coseno:
+# Coseno
+coseno <- function(x, y){
+  resultado <- x%*%y / (sqrt(x %*% x) * sqrt(y %*%y ))
+  return(as.numeric(resultado))
+}
+
+coseno(Precio,nota)
+# Coseno tras centrar los vectores
+a <- Precio - mean(Precio)
+b <- nota - mean(nota)
+coseno(a,b)
+```
+
+
+
+## Matriz Ingredientes
 ```{r}
 #install.packages("quanteda")
 library("quanteda")
@@ -176,6 +204,8 @@ df_b = df_b[,!names(df_b) %in% c("doc_id",",","!","?")]
 
 
 ```
+
+## Base de datos definitiva (DF) y conteo de ingredientes
 ```{r}
 # creamos el DF definitivo con todo lo anterior y ademas lo limpiamos de
 # columnas que no nos interesan donde salen como parte de los ingredientes:
@@ -211,6 +241,8 @@ names(DF[14]) = c(names(DF_ingre))[1]
 col_iniciales = names(DF[1:13])
 col_total = c(col_iniciales,c(names(DF_ingre)))
 ```
+
+## Histograma Ingredientes
 ```{r}
 #install.packages("tidyverse")
 library("tidyverse")
@@ -226,6 +258,7 @@ DF[,c(14:50)] %>%
   theme(axis.text.x = element_text(angle = 90))
 ```
 
+## Histograma Ingredientes hamburguesas clasificadas como "malas"
 ```{r}
 # Ahora filtraremos si la nota es menor a 3 y los comnetarios digan peor y malo.
 df_3 = filter(DF,nota<3, suma2 == 2, suma1 == 0)
@@ -241,7 +274,7 @@ df_3[,c(14:50)] %>%
   labs(x = "Ingrediente") +
   theme(axis.text.x = element_text(angle = 90))
 ```
-
+## Histograma Ingredientes hamburguesas clasificadas como "buenas"
 ```{r}
 # Ahora filtraremos si la nota es mayor a 3 y los comnetarios digan bueno y rico.
 df_4 = filter(DF,nota>3, suma1 == 2, suma2 == 0)
@@ -257,35 +290,7 @@ df_4[,c(14:50)] %>%
   labs(x = "Ingrediente") +
   theme(axis.text.x = element_text(angle = 90))
 ```
-
-```{r}
-?mahalanobis
-#DETECCIÓN DE OUTLIERS
-# Obtenemos los datos de mahalnobis con una escala de [0,1]
-sanguchez$mah = mahalanobis(cbind(Precio/max(Precio),nota/max(nota),cantidad_ingredientes/max(cantidad_ingredientes),suma1/max(suma1), suma2/max(suma2)) ,
-                            colMeans(cbind(Precio/max(Precio),nota/max(nota),cantidad_ingredientes/max(cantidad_ingredientes),suma1/max(suma1), suma2/max(suma2))),
-                            cov(cbind(cbind(Precio/max(Precio),nota/max(nota),cantidad_ingredientes/max(cantidad_ingredientes),suma1/max(suma1), suma2/max(suma2)))))
-
-
-hist(sanguchez$mah)
-plot(Precio,sanguchez$mah)
-plot(nota,sanguchez$mah)
-
-# Generar un vector boleano los dos valores más alejados segun la distancia Mahalanobis.
-outlier2 <- rep(FALSE , nrow(cbind(Precio,nota)))
-# Determinar el número de outlier que queremos encontrar.
-num.outliers= 30
-outlier2[sanguchez$mah[1:num.outliers]] <- TRUE
-# Resaltar con un punto relleno los 2 valores outliers.
-colorear.outlier <- outlier2 * 16
-```
-
-```{r}
-max(sanguchez$mah)
-min(sanguchez$mah)
-plot(c(1:358),sanguchez$mah)
-```
-
+## Análisis PCA
 ```{r}
 #Estandarizar, promedio, varianza, rotación
 apply(X = DF[,c(4,6,11,12,13)], MARGIN = 2, FUN = mean)
@@ -336,36 +341,123 @@ ggplot(data = data.frame(prop_varianza_acum, pc = 1:5),
 
 ```
 
+#Detección de Outliers
+
+## Mahalanobis
 ```{r}
-# entropia euclidiana
-d = dist(x = cbind(Precio,nota), method = "euclidean")
-class(d)
+
+# Obtenemos los datos de mahalnobis con una escala de [0,1]
+sanguchez$mah = mahalanobis(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2)) ,
+                            colMeans(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2))),
+                            cov(cbind(cbind(Precio/max(Precio),nota/max(nota),suma1/max(suma1), suma2/max(suma2)))))
+
+
+hist(sanguchez$mah)
+
+ggplot(sanguchez$mah %>% as_tibble(), aes(x=sanguchez$mah)) +
+  geom_density() +
+  theme_bw() +
+  theme(text=element_text(size=25))
+plot(Precio,sanguchez$mah)
+plot(nota,sanguchez$mah)
+
+# Generar un vector boleano los dos valores más alejados segun la distancia Mahalanobis.
+outlier2 <- rep(FALSE , nrow(cbind(Precio,nota)))
+# Determinar el número de outlier que queremos encontrar.
+num.outliers= 30
+outlier2[sanguchez$mah[1:num.outliers]] <- TRUE
+# Resaltar con un punto relleno los 2 valores outliers.
+colorear.outlier <- outlier2 * 16
 ```
 
 ```{r}
-# pearson
-cor(x = cbind(Precio,nota,cantidad_ingredientes,suma1, suma2), method = "pearson")
-cor.plot(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
+max(sanguchez$mah)
+min(sanguchez$mah)
 
-pairs(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
+# Visualizo el diagrama de dispersion, coloreado segun mahalanobis
+ggplot(DF, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
+  geom_point(size=1,alpha=0.8)+theme_bw()+
+  scale_color_gradient(low="blue",high="red")+
+  ggtitle("Distancia Mahalanobis por hamburguesa") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 20, face="bold", hjust=0.5),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10, color="black")) +
+  xlab("Hamburguesas") + 
+  ylab("Distancia Mahalanobis") 
 ```
 
-```{r}
-# similitud coseno:
-# Coseno
-coseno <- function(x, y){
-  resultado <- x%*%y / (sqrt(x %*% x) * sqrt(y %*%y ))
-  return(as.numeric(resultado))
-}
 
-coseno(Precio,nota)
-# Coseno tras centrar los vectores
-a <- Precio - mean(Precio)
-b <- nota - mean(nota)
-coseno(a,b)
+## KNN k=4
+```{r}
+# invoco librerias
+library(distances)
+library(dbscan)
+
+#Calculo distancias de mahalanobis, utilizando otro metodo disponible en la libreria distances
+tempDist <- distances(DF[,c(4,6,11,12)],normalize = "mahalanobize") %>% as.dist()
+
+#preservo las 4 distancias menores
+temp <- kNNdist(tempDist, 4, all=T)
+temp <- temp[,4] # preservo la maxima de las 4 distancias cercanas
+
+# visualizo la densidad de estas distancias maximas
+ggplot(temp %>% as_tibble(), aes(x=temp)) +
+  geom_density() +
+  theme_bw() +
+  theme(text=element_text(size=25))
+```
+```{r}
+# Visualizo el diagrama de dispersion, coloreado segun distancia máxima de KNN
+ggplot(DF, aes(x=c(1:358),y=temp,color=temp)) +
+  geom_point(size=1,alpha=0.8)+theme_bw()+
+  scale_color_gradient(low="blue",high="red")+
+  ggtitle("4-NN") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 20, face="bold", hjust=0.5),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10, color="black")) +
+  xlab("Hamburguesas") + 
+  ylab("Distancia máxima KNN") 
 ```
 
+## KNN k=5
 ```{r}
+# invoco librerias
+library(distances)
+library(dbscan)
 
+#Calculo distancias de mahalanobis, utilizando otro metodo disponible en la libreria distances
+tempDist <- distances(DF[,c(4,6,11,12)],normalize = "mahalanobize") %>% as.dist()
+
+#preservo las 4 distancias menores
+temp <- kNNdist(tempDist, 5, all=T)
+temp <- temp[,5] # preservo la maxima de las 4 distancias cercanas
+
+# visualizo la densidad de estas distancias maximas
+ggplot(temp %>% as_tibble(), aes(x=temp)) +
+  geom_density() +
+  theme_bw() +
+  theme(text=element_text(size=25))
+```
+```{r}
+# Visualizo el diagrama de dispersion, coloreado segun distancia máxima de KNN
+ggplot(DF, aes(x=c(1:358),y=temp,color=temp)) +
+  geom_point(size=1,alpha=0.8)+theme_bw()+
+  scale_color_gradient(low="blue",high="red")+
+  ggtitle("5-NN") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 20, face="bold", hjust=0.5),
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 10, color="black")) +
+  xlab("Hamburguesas") + 
+  ylab("Distancia máxima KNN") 
+```
+
+## Eliminación de Outliers
+```{r}
+df_5 = filter(DF, sanguchez$mah < 10, temp<1.5)
+dim(DF)
+dim(df_5)
 ```
 
