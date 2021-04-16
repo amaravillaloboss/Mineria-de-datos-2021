@@ -1,5 +1,10 @@
 Proyecto 1 Mineria de datos
 ================
+06.03.2020
+
+#### Librerias Utilizadas
+
+Para este proyecto se utilizaron las siguientes librerias:
 
 ``` r
 rm(list=ls())
@@ -162,6 +167,10 @@ library("recommenderlab")
     ##   print.registry_field proxy
     ##   print.registry_entry proxy
 
+## Abriendo base de datos
+
+En primer lugar cargamos los datos a utilizar
+
 ``` r
 setwd('/Users/amara/Documents/GitHub/Mineria-de-datos-2021')
 sanguchez <- read.csv("sanguchez.csv", sep=';')
@@ -170,29 +179,28 @@ sanguchez <- read.csv("sanguchez.csv", sep=';')
 
 ## Limpieza de datos
 
+Comenzamos limpiando la data de los NA y de los vacíos, para el caso de
+la varible precio, nos quedamos solo con los que tenga peso ($).
+Cambiamos todos los espacios vacíos que tengamos al inicio y al final
+por nada de cada Precio. Utilizamos attach para seguir tratando las
+columnas. Sacaremos aquellos precios que muestran mas de un precio por
+el hecho que vengan con otra moneda inicial. Para lo anterior nos
+quedaremos solo con los precios que no tengan espacios y que solo tengan
+signo peso, las eliminamos. Finalmente le quitamos los puntos y el signo
+peso, para que solo queden los números en precio y podamos transformar
+la columna a entero.
+
 ``` r
-# limpiamos la data de los NA y de los vacíos:
 sanguchez = na.omit(sanguchez)
 
-#nos quedamos solo con los que tenga peso ($):
 sanguchez <- filter(sanguchez, str_detect(sanguchez$Precio,"\\$")==T)
 
-#Cambiamos todos los espacios vacíos que tengamos al inicio y al final por nada 
-#de cada Precio:
 sanguchez$Precio = str_replace_all(sanguchez$Precio, "^ ", "")
 sanguchez$Precio = str_replace_all(sanguchez$Precio, " $", "")
 
-#aplicamos attach para seguir tratando las columnas:
 attach(sanguchez)
-#Sacaremos aquellos precios que muestran mas de un precio por el hecho que vengan con
-#otra moneda inicial
-# para lo anterior nos quedaremos solo con los precios que no tengan espacios
-#y que solo tengan y solo signo peso, las eliminamos :
 
 sanguchez <- filter(sanguchez, str_count(Precio, "\\$")==1 &  str_count(Precio," ")==0)
-
-#Finalmente le quitamos los puntos y el signo peso, para que solo queden los números en 
-#precio y podamos transformar la columna a entero:
 
 attach(sanguchez)
 ```
@@ -208,12 +216,17 @@ sanguchez$Precio = str_replace_all(sanguchez$Precio, "\\.", "")
 sanguchez$Precio = as.integer(sanguchez$Precio) 
 ```
 
-## Detección de texto
+### Detección de texto
+
+Luego, obtenemos las columnas que nos puedan ayudar, por ejemplo si en
+el texto tenemos bueno, malo, rico o peor, seleccionamos estas palabras
+ya que son adjetivos representativos de lo que estamos intentando
+identificar en el comentario de cada hamburguesa.Creamos dos variables,
+suma1 que sera representara si es que tiene un buen comentario y suma2
+si tiene uno malo. Eliminamos la columna de texto, ya que extrajimos la
+información que necesitabamos de ello.
 
 ``` r
-# Luego, obtenemos las columnas que nos puedan ayudar, por ejemplo si en el texto tenemos 
-# bueno, malo, rico o peor, seleccionamos estas palabras ya que son adjetivos representativos de lo que estamos intentando #identificar en el comentario de cada hamburguesa.
-
 sanguchez$Bueno = str_detect(texto,"(b|B)(u|U)(e|E)(n|N)(o|O)")
 sanguchez$Bueno = as.numeric(sanguchez$Bueno)
 
@@ -226,14 +239,13 @@ sanguchez$Malo = as.numeric(sanguchez$Malo)
 sanguchez$Peor = str_detect(texto,"(p|P)(e|E)(o|O)(r|R)")
 sanguchez$Peor = as.numeric(sanguchez$Peor)
 
-#Creamos dos variables, suma1 que sera representara si es que tiene un buen comentario y suma2 si tiene uno malo.
+
 sanguchez$suma1 = sanguchez$Rico + sanguchez$Bueno
 sanguchez$suma1 = as.numeric(sanguchez$suma1)
 
 sanguchez$suma2 = sanguchez$Malo + sanguchez$Peor
 sanguchez$suma2 = as.numeric(sanguchez$suma2)
 
-# Eliminamos la columna de texto, ya que extrajimos la información que necesitabamos de ello.
 sanguchez<-sanguchez[,-7]
 colnames(sanguchez)
 ```
@@ -304,13 +316,16 @@ hist(sanguchez$suma2)
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-4-6.png)<!-- -->
 
-``` r
-#install.packages("corrplot")
-# cor(sanguchez[,c(6,7,8,9)])
-# corr.test(sanguchez[,c(6,7,8,9)],use="complete")
-```
+### Análisis y conteo de variable ingredientes
 
-## Análisis y conteo de variable ingredientes
+A continuación, extraeremos la cantidad de ingredientes de cada
+hamburguesa.Esto lo haremos ya que consideramos que podria ser una
+variable relevante para nuestro análisis.Comenzamos pegando la columna
+“cantidad\_ingredientes” a la base de datos. Luego, obtenemos el máximo
+de cantidad de ingredientes. Para asi, revelar los ingredientes de la
+hamburguesa que tiene la mayor cantidad.A continuación mostramos la
+ubicación de la hamburguesa, es decir, en que fila se encuentra.
+Finalmente, enumera los ingredientes mostrando como fueron separados.
 
 ``` r
 attach(sanguchez)
@@ -325,38 +340,34 @@ attach(sanguchez)
     ##     Direccion, Ingredientes, Local, nota, Precio, url
 
 ``` r
-# A continuación, extraeremos la cantidad de ingredientes de cada hamburguesa.Esto lo haremos ya que consideramos que podria ser #una variable relevante para nuestro análisis.
 L_ingredientes = 
   strsplit(str_replace_all(sanguchez$Ingredientes,"(,.y|,y)",","),"( y |,)")
 
 L = lapply(L_ingredientes,length)
 L = as.numeric(L)
 
-#Aquí pegamos la columna "cantidad_ingredientes" a la base de datos.
+
 sanguchez$cantidad_ingredientes = L
 
-#En primer lugar, obtenemos el máximo de cantidad de ingredientes.
+
 max(sanguchez$cantidad_ingredientes)
 ```
 
     ## [1] 11
 
 ``` r
-#Luego, revela los ingredientes de la hamburguesa que tiene la mayor cantidad.
- sanguchez[which.max(sanguchez$cantidad_ingredientes),"Ingredientes"]
+sanguchez[which.max(sanguchez$cantidad_ingredientes),"Ingredientes"]
 ```
 
     ## [1] "Salchicha, salsa de cilantro picante, papas hilo, napolitana (aceituna, choclo y tomate), pepinillo, y salsa Palermo (quesillo, huevo, piment\xf3n y mayonesa)."
 
 ``` r
-#A continuación mostramos la ubicación de la hamburguesa, es decir, en que fila se encuentra.
 which.max(sanguchez$cantidad_ingredientes)
 ```
 
     ## [1] 73
 
 ``` r
-#Finalmente, enumera los ingredientes mostrando como fueron separados.
  L_ingredientes[which.max(sanguchez$cantidad_ingredientes)]
 ```
 
@@ -368,10 +379,53 @@ which.max(sanguchez$cantidad_ingredientes)
     ##  [9] " huevo"                     " piment�n"                 
     ## [11] "mayonesa)."
 
-## Análisis visual de los datos
+### Análisis visual de los datos
+
+A partir de la limpieza de la base de datos realizada con anterioridad,
+damos paso a realizar diferentes representaciones gráficas de los datos.
+A partir de la función summary obtenemos distintas métricas de cada
+variable
+
+Conclusiones:
+
+-Gráfico 1: La variable nota no es muy “dependiente” de la variable
+cantidad de ingredientes, ya que, se \#puede observar que el rango de
+cantidad de ingredientes es similar en todas las notas.
+
+-Gráfico 2: Aproximadamente el 50% de los datos se acumula entre 4 y 6,
+es decir, que la mitad de las \#hamburguesas tiene entre 4 y 6
+ingredientes.
+
+-Gráfico 3: La media de todas las notas es cercana al 5, lo que varia es
+el rango en la cantidad de \#ingredientes en las notas 4 y 5, donde el
+rango intercuartilico entre el 25 y 75% se mueve entre números más
+grandes, los números 5 a 6 y 5 a 7 respectivamente. Adémas se observan
+posibles outliers o datós \#atipicos en las notas 2, 3 y 4, que se
+escapan del rango intercuartil, teniendo o muchos ingredientes o muy
+\#pocos.
+
+-Gráfico 4: Para la nota 1, podemos notar que la variación es del 0 al
+1, es decir, que en el comentario \#podría estar la palabra bueno o
+rico, pero no ambas al mismo tiempo, lo que tiene mucho sentido. Aunque,
+\#para el caso de la nota 5, ocurre el mismo fenomeno, lo que nos parece
+extraño ya que si tiene mejor nota deberia tener mas de estos
+calificativos. Por lo que concluimos que quizas la elección de palabras
+no fue la óptima.
+
+-Gráfico 5: Podemos observar que en las notas 4 y 5 la mayoria de los
+datos no presentan ningun comentario “malo” o “peor”. Lo que quiere
+decir que la variable suma2 explica mucho mejor que la variable suma1.
+
+-Gráfico 6: A grandes rasgos, la media de cantidad de ingredientes no
+varia mucho segun la nota.
+
+-Gráfico 7: Se puede observar algun tipo e correlacion, pero no
+necesariamente positivo, es decir, no porque tenga mas ingredientes la
+hamburguesa significa que esta tenga un precio mas elevado. Además se
+observan \#algunos datos atipicos como por ejemplo cuando la hamburguesa
+tiene 7 ingredientes.
 
 ``` r
-#A partir de la limpieza de la base de datos realizada con anterioridad, damos paso a realizar diferentes representaciones gráficas de los datos.
 attach(sanguchez)
 ```
 
@@ -389,7 +443,6 @@ attach(sanguchez)
     ##     Direccion, Ingredientes, Local, nota, Precio, url
 
 ``` r
-#A partir de la función summary obtenemos distintas métricas de cada variable
 summary(sanguchez)
 ```
 
@@ -474,21 +527,19 @@ boxplot(sanguchez$Precio ~ sanguchez$cantidad_ingredientes)
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-6-7.png)<!-- -->
 
-``` r
-# Conclusiones
-# Gráfico 1: La variable nota no es muy "dependiente" de la variable cantidad de ingredientes, ya que, se #puede observar que el rango de cantidad de ingredientes es similar en todas las notas.
-# Gráfico 2: Aproximadamente el 50% de los datos se acumula entre 4 y 6, es decir, que la mitad de las #hamburguesas tiene entre 4 y 6 ingredientes.
-# Gráfico 3: La media de todas las notas es cercana al 5, lo que varia es el rango en la cantidad de #ingredientes en las notas 4 y 5, donde el rango intercuartilico  entre el 25 y 75% se mueve entre números #mas grandes, los números 5 a 6 y 5 a 7 respectivamente. Adémas se observan posibles outliers o datós #atipicos en las notas 2, 3 y 4, que se escapan del rango intercuartil, teniendo o muchos ingredientes o muy #pocos.
-#Gráfico 4: Para la nota 1, podemos notar que la variación es del 0 al 1, es decir, que en el comentario #podría estar la palabra bueno o rico, pero no ambas al mismo tiempo, lo que tiene mucho sentido. Aunque, #para el caso de la nota 5, ocurre el mismo fenomeno, lo que nos parece extraño ya que si tiene mejor nota #deberia tener mas de estos calificativos. Por lo que concluimos que quizas la elección de palabras no fue #la óptima.
-#Gráfico 5: Podemos observar que en las notas 4 y 5 la mayoria de los datos no presentan ningun comentario "malo" o "peor". Lo que quiere decir que la variable suma2 explica mucho mejor que la variable suma1.
-#Gráfico 6: A grandes rasgos, la media de cantidad de ingredientes no varia mucho segun la nota. 
-#Gráfico 7: Se puede observar algun tipo e correlacion, pero no necesariamente positivo, es decir, no porque #tenga mas ingredientes la hamburguesa significa que esta tenga un precio mas elevado. Además se observan #algunos datos atipicos como por ejemplo cuando la hamburguesa tiene 7 ingredientes.
-```
+### Correlación entre variables númericas
 
-## Correlación entre variables númericas
+Realizamos la correlación de Pearson.
+
+Conclusiones: Podemos observar distintos tipos de correlacion entre las
+variables. Por ejemplo, la variable Precio tiene una correlacion
+positiva con cantidad de ingredientes, pero esta al ser 0.22 es muy
+cercana a 0 lo que se considera baja. Para el caso de suma2 con nota es
+-0.41, observaos una correlacion negativa pero mas alta, cercana al 0.5,
+lo que nuevamente demuestra que la variable suma2 explica mucho mejor
+que la variable suma1, la nota de la hamburguesa.
 
 ``` r
-# Correlación de pearson: 
 cor(x = cbind(Precio,nota,cantidad_ingredientes,suma1, suma2), method = "pearson")
 ```
 
@@ -517,15 +568,12 @@ pairs(cbind(Precio,nota,cantidad_ingredientes, suma1, suma2))
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
 
-``` r
-#Conclusiones
-# Podemos observar distintos tipos de correlacion entre las variables. Por ejemplo, la variable Precio tiene una correlacion positiva con cantidad de ingredientes, pero esta al ser 0.22 es muy cercana a 0 lo que se considera baja. Para el caso de suma2 con nota es -0.41, observaos una correlacion negativa pero mas alta, cercana al 0.5, lo que nuevamente demuestra que la variable suma2 explica mucho mejor que la variable suma1, la nota de la hamburguesa.
-```
+### Matriz Ingredientes
 
-## Matriz Ingredientes
+Contamos palabra por palabra para los ingredientes, reiniciamos los
+indices de los sanguchez y sacamos los signos que no nos aportan
 
 ``` r
-#install.packages("quanteda")
 library("quanteda")
 ```
 
@@ -543,7 +591,6 @@ library("quanteda")
     ##     View
 
 ``` r
-# contamos palabra por palabra para los ingredientes:
 ingre <- sanguchez$Ingredientes
 ingre <- char_tolower(ingre)
 ingre <- iconv(ingre, to = "ASCII//TRANSLIT")
@@ -554,37 +601,41 @@ b <- dfm(ingre, remove = c(stopwords("es")))
 
 ``` r
 df_b = convert(b, to= "data.frame")
-# reiniciamos los indices de los sanguchez
+
 row.names(sanguchez) = NULL
 
-# sacamos los signos que no nos aportan
+
 df_b = df_b[,!names(df_b) %in% c("doc_id",",","!","?")]
 ```
 
-## Base de datos definitiva (DF) y conteo de ingredientes
+### Base de datos definitiva (DF) y conteo de ingredientes
+
+creamos el DF definitivo con todo lo anterior y ademas lo limpiamos de
+columnas que no nos interesan donde salen como parte de los
+ingredientes. Luego, obtenemos la suma que tendra el total de cada
+ingrediente. Con S reordenamos las columnas de DF\_ingre. Ya con
+DF\_ingre ordenado por cada ingrediente, podemos ahora ordenar DF para
+que los ingredientes a partir de la columna 11, puedan estar ordenados
+de mayor a menor por la cantidad de veces que sale cada uno en total de
+todas las hamburguesas.Por ejemplo los 5 mas aparecidos con las veces de
+cada uno. En la salida de codigo se observan los 10 ingredientes que mas
+se utilizan en el repertorio de hamburguesas.
 
 ``` r
-# creamos el DF definitivo con todo lo anterior y ademas lo limpiamos de
-# columnas que no nos interesan donde salen como parte de los ingredientes:
 DF = cbind(sanguchez,df_b)
 columnas_sacar = c("170","250","by","225","vacia3","20","185","a3n","/","%","220","300",
                    "\"" ,"(","230","1", ")","3","120","180",".","2","mah","175","340","5","100",
                    "200","ra","suma")
 DF = DF[,!names(DF) %in% columnas_sacar]
 
-# str(DF)
-# obtenemos la suma que tendra el total de cada ingrediente:
+
 DF_ingre = DF[,c(14:356)]
-# Así se debe ocupar el order de manera correcta:
+
 S = colSums(DF_ingre)
-# con S reordenamos las columnas de DF_ingre:
+
 DF_ingre = DF_ingre[,order(S,decreasing = T)]
 S = S[order(S,decreasing = T)]
-# ya con DF_ingre ordenado por cada ingrediente, podemos ahora ordenar
-# DF para que los ingredientes a partir de la columna 11, puedan estar
-# ordenados de mayor a menor por la cantidad de veces que sale cada uno en total
-# de todas las hamburguesas:
-# por ejemplo los 5 mas aparecidos con las veces de cada uno:
+
 S[c(1:10)]
 ```
 
@@ -594,8 +645,6 @@ S[c(1:10)]
     ##          36          29          28          26
 
 ``` r
-# ahora si reemplazamos DF[,c(14:356)] por DF_ingre y además ajustamos los
-
 DF[,c(14:356)] = DF_ingre
 col_iniciales = names(DF[1:13])
 col_total = c(col_iniciales,c(names(DF_ingre)))
@@ -605,14 +654,14 @@ DF[,c(14:356)] = DF[,c(names(DF_ingre))]
 names(DF[14]) = c(names(DF_ingre))[1]
 col_iniciales = names(DF[1:13])
 col_total = c(col_iniciales,c(names(DF_ingre)))
-
-#En la salida de código se muestra los 10 ingredientes que más se utilizan en el repertorio de hamburguesas.
 ```
 
-## Histograma Ingredientes
+### Histograma Ingredientes
+
+A partir del histograma podemos observar los ingredientes mas utilizados
+y como se distibuyen.
 
 ``` r
-#install.packages("tidyverse")
 library("tidyverse")
 glimpse(DF)
 ```
@@ -990,11 +1039,7 @@ DF[,c(14:50)] %>%
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-``` r
-#A partir del histograma podemos observar los ingredientes mas utilizados y como se distibuyen.
-```
-
-## Histograma Ingredientes hamburguesas clasificadas como “malas”
+### Histograma Ingredientes hamburguesas clasificadas como “malas”
 
 ``` r
 # Ahora filtraremos si la nota es menor a 3 y los comnetarios digan peor y malo.
@@ -1376,7 +1421,7 @@ df_3[,c(14:50)] %>%
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
-## Histograma Ingredientes hamburguesas clasificadas como “buenas”
+### Histograma Ingredientes hamburguesas clasificadas como “buenas”
 
 ``` r
 # Ahora filtraremos si la nota es mayor a 3 y los comnetarios digan bueno y rico.
@@ -1758,10 +1803,16 @@ df_4[,c(14:50)] %>%
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-## Análisis PCA
+### Análisis PCA
+
+Comenzamos estandarizando, promedio, varianza, rotación. Graficamos la
+varianza explicada. A partir del analisis PCA, vamos a eliminar la
+variable con menos varianza explicada. En el gráfico de varianza
+explicada acumulada, se puede ver que si se elimina el componente 5, es
+decir, la cantidad de ingredientes, el resto de las variables en su
+totalidad, van a explicar un 90%.
 
 ``` r
-#Estandarizar, promedio, varianza, rotación
 apply(X = DF[,c(4,6,11,12,13)], MARGIN = 2, FUN = mean)
 ```
 
@@ -1840,14 +1891,12 @@ dim(pca$x)
     ## [1] 358   5
 
 ``` r
-#graficar
 biplot(x = pca, scale = 0, cex = 0.6, col = c("blue4", "brown3"))
 ```
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
-#varianza explicada
 pca$sdev^2
 ```
 
@@ -1861,7 +1910,6 @@ prop_varianza
     ## [1] 0.2849977 0.2552136 0.2013682 0.1567943 0.1016262
 
 ``` r
-#graficar
 ggplot(data = data.frame(prop_varianza, pc = 1:5 ),
        aes(x = pc, y = prop_varianza)) +
   geom_col(width = 0.3) +
@@ -1893,19 +1941,28 @@ ggplot(data = data.frame(prop_varianza_acum, pc = 1:5),
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
 
 ``` r
-#A partir del analisis PCA, vamos a eliminar la variable con menos varianza explicada. En el gráfico de varianza explicada acumulada, se puede ver que si se elimina el componente 5, es decir, la cantidad de ingredientes, el resto de las variables en su totalidad, van a explicar un 90%.
-```
-
-``` r
 dataframe <- select(DF, -url, -Local, -Direccion, -Ingredientes, -Bueno, -Rico, -Malo, -Peor, -suma1, -cantidad_ingredientes)
 ```
 
-\#Detección de Outliers
+\#\#Detección de Outliers
 
-## Mahalanobis
+### Mahalanobis
+
+Obtenemos los datos de mahalnobis con una escala de \[0,1\]. Generamos
+un vector boleano con los dos valores más alejados segun la distancia
+Mahalanobis. Determinamos el número de outlier que queremos encontrar.
+Resaltamos con un punto relleno los 2 valores outliers. Visualizamos el
+diagrama de dispersion, coloreado segun mahalanobis.
+
+Conclusiones:
+
+A partir de los gráficos se puede observar sobre la distancia igual a 7
+comenzamos a notar un cambio de \#color, lo que puede indicar, la
+detección de los outliers. Esto se puede observar a su vez, en el
+grafico de densidad hecho con anterioridad a este, en donde los datos se
+concentran entre 0 y 7.
 
 ``` r
-# Obtenemos los datos de mahalnobis con una escala de [0,1]
 sanguchez$mah = mahalanobis(cbind(Precio/max(Precio),nota/max(nota), suma2/max(suma2)) ,
                             colMeans(cbind(Precio/max(Precio),nota/max(nota), suma2/max(suma2))),
                             cov(cbind(cbind(Precio/max(Precio),nota/max(nota),suma2/max(suma2)))))
@@ -1938,12 +1995,11 @@ plot(nota,sanguchez$mah)
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
 
 ``` r
-# Generar un vector boleano los dos valores más alejados segun la distancia Mahalanobis.
 outlier2 <- rep(FALSE , nrow(cbind(Precio,nota)))
-# Determinar el número de outlier que queremos encontrar.
+
 num.outliers= 30
 outlier2[sanguchez$mah[1:num.outliers]] <- TRUE
-# Resaltar con un punto relleno los 2 valores outliers.
+
 colorear.outlier <- outlier2 * 16
 ```
 
@@ -1960,7 +2016,6 @@ min(sanguchez$mah)
     ## [1] 0.5482421
 
 ``` r
-# Visualizo el diagrama de dispersion, coloreado segun mahalanobis
 ggplot(dataframe, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
   geom_point(size=1,alpha=0.8)+theme_bw()+
   scale_color_gradient(low="blue",high="red")+
@@ -1975,26 +2030,33 @@ ggplot(dataframe, aes(x=c(1:358),y=sanguchez$mah,color=sanguchez$mah)) +
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-``` r
-#Conclusiones
-# A partir de los gráficos se puede observar sobre la distancia igual a 7 comenzamos a notar un cambio de #color, lo que puede indicar, la detección de los outliers. Esto se puede observar a su vez, en el grafico de densidad hecho con anterioridad a este, en donde los datos se concentran entre 0 y 7.
-```
+### KNN k=4
 
-## KNN k=4
+Calculo distancias de mahalanobis, utilizando otro metodo disponible en
+la libreria distances, preservamos las 4 distancias menores, preservamos
+la maxima de las 4 distancias cercanas. visualizamos la densidad de
+estas distancias maximas.Visualizamos el diagrama de dispersion,
+coloreado segun distancia máxima de KNN.
+
+Conclusiones
+
+Al igual que en mahalanobis, el cambio de color se observa en distancia
+máxima=1, los puntitos rojos empizan a aparecer después de esa
+distancia. Tambien, en el grafico de densidad se observa la mayor
+cantidad de datos se acumula entre 0 y 1.
 
 ``` r
-# invoco librerias
 library(distances)
 library(dbscan)
 
-#Calculo distancias de mahalanobis, utilizando otro metodo disponible en la libreria distances
+
 tempDist <- distances(dataframe[,c(1,2,3)],normalize = "mahalanobize") %>% as.dist()
 
-#preservo las 4 distancias menores
-temp <- kNNdist(tempDist, 4, all=T)
-temp <- temp[,4] # preservo la maxima de las 4 distancias cercanas
 
-# visualizo la densidad de estas distancias maximas
+temp <- kNNdist(tempDist, 4, all=T)
+temp <- temp[,4] 
+
+
 ggplot(temp %>% as_tibble(), aes(x=temp)) +
   geom_density() +
   theme_bw() +
@@ -2004,7 +2066,6 @@ ggplot(temp %>% as_tibble(), aes(x=temp)) +
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
-# Visualizo el diagrama de dispersion, coloreado segun distancia máxima de KNN
 ggplot(dataframe, aes(x=c(1:358),y=temp,color=temp)) +
   geom_point(size=1,alpha=0.8)+theme_bw()+
   scale_color_gradient(low="blue",high="red")+
@@ -2019,12 +2080,12 @@ ggplot(dataframe, aes(x=c(1:358),y=temp,color=temp)) +
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
-``` r
-#Conclusiones
-#Al igual que en mahalanobis, el cambio de color se observa en distancia máxima=1, los puntitos rojos empizan a aparecer después de esa distancia. Tambien, en el grafico de densidad se observa la mayor cantidad de datos se acumula entre 0 y 1.
-```
+### Eliminación de Outliers
 
-## Eliminación de Outliers
+En base a lo explicado anteriormente, vamos a filtrar la base de datos
+segun hamburguesas que tengan \#distancia mahalanobis&lt;7 y distancia
+maxima knn&lt;1. Obteniendo finalmente una base de datos más limpia con
+\#326 variables.
 
 ``` r
 df_5 = filter(dataframe, sanguchez$mah < 7, temp<1)
@@ -2039,12 +2100,7 @@ dim(df_5)
 
     ## [1] 326 346
 
-``` r
-#Conclusion
-#En base a lo explicado anteriormente, vamos a filtrar la base de datos segun hamburguesas que tengan #distancia mahalanobis<7 y distancia maxima knn<1. Obteniendo finalmente una base de datos más limpia con #326 variables.
-```
-
-## Histograma Ingredientes hamburguesas clasificadas como “buenas”
+### Histograma Ingredientes hamburguesas clasificadas como “buenas”
 
 ``` r
 df_5 = filter(dataframe,nota>3, suma2 == 0)
@@ -2425,7 +2481,8 @@ df_5[,c(4:50)] %>%
 
 ![](Proyecto2021mineria_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
-``` r
-#Conclusión final:
-#A partir de todo el analisis anterior, graficos, etc. Los ingredientes que asegurarian una buena nota son: #queso azul, mayonesa casera, cebolla caramelizada, salsa, palta, tomate, hamburguesa de carne y lechuga. Podrian #haber otras combinaciones que tambien funcionarian entre los ingredientes que se muestran en el gráfico.
-```
+\#\#Conclusión final A partir de todo el analisis anterior, graficos,
+etc. Los ingredientes que asegurarian una buena nota son: \#queso azul,
+mayonesa casera, cebolla caramelizada, salsa, palta, tomate, hamburguesa
+de carne y lechuga. Podrian \#haber otras combinaciones que tambien
+funcionarian entre los ingredientes que se muestran en el gráfico.
